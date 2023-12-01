@@ -1,8 +1,23 @@
-# React + Vite
+# This is simple Notes application to create note
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Live Link
+[Link](https://note-s.netlify.app/)
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Technologies used Frontend
+* React js
+* vite js
+* tailwindcss
+* react-dom
+* react-icons
+* react-hot-toast
+* axios
+
+## Technologies used Backend
+* mongodb
+* express
+* cors
+* node js
+* dotenv
+
+ 
