@@ -1,21 +1,70 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
+import { AuthContext } from "../../Providers/AuthProvider";
 
 const Note = () => {
+
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState("");
   const [editingNoteId, setEditingNoteId] = useState("");
   const [editedNoteText, setEditedNoteText] = useState("");
 
+  const {logOut, user,signInWithGoogle} = useContext(AuthContext)
+
+
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+      toast.success("Logged in successful", {
+        style: {
+          border: "1px solid #69db7c",
+          padding: "16px",
+          color: "#69db7c",
+        },
+        iconTheme: {
+          primary: "#69db7c",
+          secondary: "#FFFAEE",
+        },
+      });
+      
+    } catch (error) {
+      // Handle error, e.g., display an error message
+      console.error("Google Sign In Error:", error);
+    }
+  };
+
+// log out 
+  const handleLogOut = () => {
+    logOut()
+    .then(() => {
+      toast.success("Logout successful", {
+        style: {
+          border: "1px solid #69db7c",
+          padding: "16px",
+          color: "#69db7c",
+        },
+        iconTheme: {
+          primary: "#69db7c",
+          secondary: "#FFFAEE",
+        },
+      });
+    })
+      
+      .catch((error) => console.error(error));
+  };
+
   useEffect(() => {
-    fetchNotes();
-  }, []);
+    if (user) {
+      fetchNotes();
+    }
+  }, [user]);
 
   const fetchNotes = async () => {
     try {
       const response = await axios.get(
-        "https://notes-dusky.vercel.app/api/notes"
+        `https://notes-dusky.vercel.app/api/notes?email=${user.email}`
       );
       setNotes(response.data);
     } catch (error) {
@@ -24,6 +73,10 @@ const Note = () => {
   };
 
   const handleSave = async () => {
+    if (!user) {
+      toast.error("Please log in before creating a note.");
+      return;
+    }
     if (!newNote.trim()) {
       toast.error("Field can not be empty", {
         style: {
@@ -43,6 +96,7 @@ const Note = () => {
         "https://notes-dusky.vercel.app/api/notes",
         {
           text: newNote,
+          email: user.email
         }
       );
       toast.success("Note has been saved.", {
@@ -74,6 +128,10 @@ const Note = () => {
   };
 
   const handleEditSave = async (id) => {
+    if (!user) {
+      toast.error("Please log in before editing a note.");
+      return;
+    }
     if (!editedNoteText.trim()) {
       toast.error("Field can not be empty", {
         style: {
@@ -91,7 +149,7 @@ const Note = () => {
     try {
       const response = await axios.put(
         `https://notes-dusky.vercel.app/api/notes/${id}`,
-        { text: editedNoteText }
+        { text: editedNoteText, email: user.email, }
       );
       setNotes((prevNotes) =>
         prevNotes.map((note) =>
@@ -117,8 +175,14 @@ const Note = () => {
   };
 
   const handleDelete = async (id) => {
+    if (!user) {
+      toast.error("Please log in before deleting a note.");
+      return;
+    }
     try {
-      await axios.delete(`https://notes-dusky.vercel.app/api/notes/${id}`);
+      await axios.delete(
+        `https://notes-dusky.vercel.app/api/notes/${id}?email=${user.email}`
+      );
       setNotes((prevNotes) => prevNotes.filter((note) => note._id !== id));
       toast.error("Note has been Deleted");
     } catch (error) {
@@ -127,9 +191,10 @@ const Note = () => {
   };
 
   return (
-    <div className="max-w-md sm:max-w-2xl font-golos mx-auto  sm:mx-auto my-12 flex flex-col justify-center">
-      <h1 className="mx-4 sm:max-auto flex justify-center bg-gradient-to-t from-blue-400 to-blue-500 font-bold text-4xl text-blue-800">
+    <div className="max-w-md  sm:max-w-2xl font-golos mx-auto  sm:mx-auto my-12 flex flex-col justify-center">
+      <h1 className="mx-4 sm:max-auto relative flex justify-center bg-gradient-to-t from-blue-400 to-blue-500 font-bold text-4xl text-blue-800">
         Notes
+      <img title={user?.displayName} className="w-8 h-8 absolute top-1 right-3 rounded-full" src={user?.photoURL ? user?.photoURL : "https://www.iconpacks.net/icons/2/free-user-icon-3296-thumb.png"} alt="user image" />
       </h1>
       <div className="bg-blue-200 mx-4 shadow-lg py-4">
         <p className="ml-4 pt-2">*type your notes here</p>
@@ -147,12 +212,25 @@ const Note = () => {
           >
             Save
           </button>
+          { user ? <button
+            className="bg-green-500 hover:bg-green-400 mt-4  px-2 mx-4 sm:mx-2 rounded-md font-golos font-semibold  py-2 h-12 sm:mt-4 text-white"
+            onClick={handleLogOut}
+          >
+            Log out
+          </button>
+          :
+          <button
+            className="bg-yellow-400 hover:bg-yellow-300 mt-4  px-8 mx-4 sm:mx-2 rounded-md font-golos font-semibold  py-2 h-12 sm:mt-4 text-white"
+            onClick={handleGoogleSignIn}
+          >
+            Login with Google
+          </button>}
           <Toaster />
         </div>
 
         <ul>
-          <p className="ml-4 pt-4 font-semibold">*Your notes:</p>
-          {notes?.map((note, index) => (
+        {user && <p className="ml-4 pt-4 font-semibold">*Your notes:</p>}
+          {user && notes?.map((note, index) => (
             <li key={note._id}>
               {editingNoteId === note._id ? (
                 <>
